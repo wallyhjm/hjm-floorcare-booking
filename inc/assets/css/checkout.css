@@ -1,0 +1,34 @@
+.floorcare-booking-summary, .floorcare-checkout-service-address, .customer_details {
+    border: 1px solid #e5e5e5;
+    padding: 16px;
+    margin-bottom: 24px;
+    background: #fafafa;
+}
+
+.floorcare-booking-summary h3, .floorcare-checkout-service-address h3, .customer_details h3 {
+    margin-top: 0;
+}
+
+.floorcare-edit-toggle {
+    display: block;
+    margin-top: 12px;
+    font-size: 0.95em;
+}
+
+.floorcare-availability-message {
+    margin-top: 8px;
+    font-size: 0.95em;
+}
+
+.floorcare-availability-message.available {
+    color: #2e7d32;
+}
+
+.floorcare-availability-message.limited {
+    color: #ed6c02;
+}
+
+.floorcare-availability-message.none {
+    color: #d32f2f;
+    font-weight: 600;
+}

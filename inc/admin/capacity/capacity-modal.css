@@ -1,0 +1,21 @@
+#hjm-capacity-modal {
+    position: fixed !important;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 100000; /* higher than WP admin bar */
+    display: none;
+}
+
+.hjm-capacity-modal-inner {
+    position: relative;
+    background: #fff;
+    max-width: 420px;
+    margin: 10vh auto;
+    padding: 20px;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.3);
+}
+
+tr.hjm-capacity-override {
+    background: #fff7e6;
+}
