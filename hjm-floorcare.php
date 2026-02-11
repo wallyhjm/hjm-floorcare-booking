@@ -7,8 +7,7 @@ if (!defined('ABSPATH')) exit;
 
 define('HJM_FLOORCARE_PATH', plugin_dir_path(__FILE__));
 define('HJM_FLOORCARE_URL', plugin_dir_url(__FILE__));
-define('HJM_GOOGLE_API_KEY', 'AIzaSyAG8EQ5RGfB82K9yw0je93kKHyCYrtkQTg');
-define('HJM_GOOGLE_PLACES_API_KEY', 'AIzaSyAHRv-ZWbUpRQyCOlxE6-ZK0dcAHVsPO6Q');
+
 
 require_once HJM_FLOORCARE_PATH . 'inc/activation.php';
 require_once HJM_FLOORCARE_PATH . 'inc/enqueue.php';
