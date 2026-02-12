@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once HJM_FLOORCARE_PATH . 'inc/pricing/trip-charge-rates.php';
 require_once HJM_FLOORCARE_PATH . 'inc/pricing/trip-charge-calculator.php';
@@ -10,8 +10,6 @@ require_once HJM_FLOORCARE_PATH . 'inc/pricing/trip-charge.php';
 add_action('hjm_floorcare_woocommerce_ready', function () {
 
     add_action('woocommerce_before_calculate_totals', function ($cart) {
-
-        error_log('HJM FLOORCARE: pricing hook fired');
 
         foreach ($cart->get_cart() as $cart_item) {
 

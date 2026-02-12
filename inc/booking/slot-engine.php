@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Floorcare booking availability engine
  *
@@ -41,9 +41,6 @@ function hjm_floorcare_get_job_duration_minutes() {
 /**
  * Get existing bookings for a date
  *
- * Stub for now — returns empty array
- * Later this will query the bookings table
- *
  * Format:
  * [
  *   ['start' => '09:00', 'end' => '11:00'],
@@ -84,7 +81,6 @@ function hjm_floorcare_get_bookings_for_date( $date ) {
         ];
     }, $rows );
 }
-
 
 /**
  * Convert HH:MM to minutes since midnight
@@ -160,7 +156,3 @@ function hjm_floorcare_get_available_slots( $date ) {
 
     return $slots;
 }
-
-
-
-

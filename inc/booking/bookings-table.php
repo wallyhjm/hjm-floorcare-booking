@@ -19,6 +19,8 @@ function hjm_floorcare_create_bookings_table() {
             end_time TIME NOT NULL,
             duration_minutes INT NOT NULL,
             service_address TEXT NOT NULL,
+            trip_miles DECIMAL(6,2) NULL,
+            trip_fee DECIMAL(10,2) NULL,
             status VARCHAR(20) NOT NULL DEFAULT 'pending',
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

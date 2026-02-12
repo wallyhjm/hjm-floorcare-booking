@@ -20,6 +20,7 @@ add_action('wp_enqueue_scripts', function () {
             'ajaxUrl'    => admin_url('admin-ajax.php'),
             'isCart'     => is_cart(),
             'isCheckout' => is_checkout(),
+            'nonce'      => wp_create_nonce( 'hjm_floorcare_ajax' ),
         ]
     );
 
@@ -48,6 +49,7 @@ add_action('wp_enqueue_scripts', function () {
             'floorcareBookingContext',
             [
                 'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce'   => wp_create_nonce( 'hjm_floorcare_ajax' ),
             ]
         );
     }

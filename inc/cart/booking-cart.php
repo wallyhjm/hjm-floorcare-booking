@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Cart booking date/time UI + AJAX persistence
  */
@@ -41,7 +41,7 @@ add_action('woocommerce_after_cart_table', function () {
             <p>
                 <label for="floorcare_booking_time"><strong>Start Time</strong></label><br>
                 <select id="floorcare_booking_time" name="floorcare_booking_time" class="input-text">
-                    <option value="">— Select a time —</option>
+                    <option value="">-- Select a time --</option>
                     <?php if ( $booking_time ) : ?>
                         <option value="<?php echo esc_attr($booking_time); ?>" selected>
                             <?php echo esc_html($booking_time); ?>
@@ -67,6 +67,8 @@ add_action('wp_ajax_nopriv_floorcare_get_slots', 'hjm_floorcare_ajax_get_slots')
 
 function hjm_floorcare_ajax_get_slots() {
 
+    check_ajax_referer( 'hjm_floorcare_ajax', 'nonce' );
+
     if ( ! function_exists('hjm_floorcare_get_available_slots') ) {
         wp_send_json_error(['message' => 'Availability engine not loaded.'], 500);
     }
@@ -90,6 +92,8 @@ add_action('wp_ajax_nopriv_floorcare_set_booking', 'hjm_floorcare_ajax_set_booki
 
 function hjm_floorcare_ajax_set_booking() {
 
+    check_ajax_referer( 'hjm_floorcare_ajax', 'nonce' );
+
     $date = sanitize_text_field($_POST['date'] ?? '');
     $time = sanitize_text_field($_POST['time'] ?? '');
 
@@ -112,5 +116,4 @@ function hjm_floorcare_ajax_set_booking() {
 
     wp_send_json_success();
 }
-
 

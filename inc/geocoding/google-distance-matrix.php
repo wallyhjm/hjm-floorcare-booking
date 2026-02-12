@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /**
  * Get driving distance in miles using Google Distance Matrix API
@@ -36,15 +36,13 @@ function hjm_floorcare_google_drive_distance($origin, $destination)
 
     $body = json_decode(wp_remote_retrieve_body($response), true);
 
-    error_log('HJM FLOORCARE DISTANCE RESPONSE: ' . print_r($body, true));
-
     if (
         empty($body['rows'][0]['elements'][0]['distance']['value'])
     ) {
         return false;
     }
 
-    // meters → miles
+    // meters -> miles
     $meters = $body['rows'][0]['elements'][0]['distance']['value'];
     $miles  = round($meters / 1609.34, 1);
 

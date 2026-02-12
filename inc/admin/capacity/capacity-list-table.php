@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if ( ! defined('ABSPATH') ) exit;
 
 if ( ! class_exists('WP_List_Table') ) {
@@ -59,7 +59,7 @@ class HJM_Floorcare_Capacity_List_Table extends WP_List_Table {
     protected function column_override( $item ) {
         return $item['is_override']
             ? '<span style="color:#b36b00;font-weight:600;">Yes</span>'
-            : '—';
+            : '-';
     }
 
     public function single_row( $item ) {
@@ -87,4 +87,3 @@ class HJM_Floorcare_Capacity_List_Table extends WP_List_Table {
         );
     }
 }
-

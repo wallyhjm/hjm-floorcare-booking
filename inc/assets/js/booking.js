@@ -1,4 +1,4 @@
-(function ($) {
+﻿(function ($) {
 
     const ctx = window.floorcareBookingContext || {};
     if (!ctx.ajaxUrl) return;
@@ -8,6 +8,7 @@
     function fetchSlots(date) {
         return $.post(ctx.ajaxUrl, {
             action: 'floorcare_get_slots',
+            nonce: ctx.nonce || '',
             date: date
         }).then(resp => {
             if (!resp || !resp.success) return [];
@@ -18,6 +19,7 @@
     function setBooking(date, time) {
         return $.post(ctx.ajaxUrl, {
             action: 'floorcare_set_booking',
+            nonce: ctx.nonce || '',
             date: date,
             time: time
         });
@@ -34,7 +36,7 @@
         $container.find('.no-slots').remove();
 
         $sel.empty().append(
-            $('<option>', { value: '', text: '— Select a time —' })
+            $('<option>', { value: '', text: '-- Select a time --' })
         );
 
         times.forEach(t => {
@@ -53,6 +55,7 @@
     function fetchAvailability(date) {
         return $.post(ctx.ajaxUrl, {
             action: 'floorcare_get_date_availability',
+            nonce: ctx.nonce || '',
             date: date
         }).then(resp => resp?.success ? resp.data : null);
     }

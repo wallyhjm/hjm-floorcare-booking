@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if ( ! defined('ABSPATH') ) exit;
 
 $date = WC()->session->get('floorcare_booking_date');
@@ -25,7 +25,7 @@ $time = WC()->session->get('floorcare_booking_time');
                 name="floorcare_booking_time"
                 class="input-text"
         >
-            <option value="">— Select a time —</option>
+            <option value="">-- Select a time --</option>
 
             <?php if ( $time ) : ?>
                 <option value="<?php echo esc_attr($time); ?>" selected>

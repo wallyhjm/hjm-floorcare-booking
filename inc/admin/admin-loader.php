@@ -8,4 +8,3 @@ if ( ! is_admin() ) {
 
 // Capacity management
 require_once HJM_FLOORCARE_PATH . 'inc/admin/capacity/capacity-page.php';
-require_once HJM_FLOORCARE_PATH . 'inc/admin/capacity/capacity-actions.php';

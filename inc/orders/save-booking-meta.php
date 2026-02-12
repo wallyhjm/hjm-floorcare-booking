@@ -48,5 +48,5 @@ add_action('woocommerce_checkout_create_order', function ($order) {
         $order->update_meta_data('_floorcare_trip_fee', (float) $fee);
     }
 
-});
+}, 5);
 

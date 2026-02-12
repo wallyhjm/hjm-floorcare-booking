@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 add_action('rest_api_init', function () {
 
@@ -9,17 +9,27 @@ add_action('rest_api_init', function () {
             [
                 'methods'  => 'GET',
                 'callback' => 'hjm_floorcare_get_service_address',
-                'permission_callback' => '__return_true',
+                'permission_callback' => 'hjm_floorcare_store_api_permission',
             ],
             [
                 'methods'  => 'POST',
                 'callback' => 'hjm_floorcare_set_service_address',
-                'permission_callback' => '__return_true',
+                'permission_callback' => 'hjm_floorcare_store_api_permission',
             ],
         ]
     );
 
 });
+
+function hjm_floorcare_store_api_permission( $request ) {
+    if ( ! is_user_logged_in() ) {
+        return true;
+    }
+
+    $nonce = $request->get_header( 'X-WP-Nonce' );
+
+    return (bool) wp_verify_nonce( $nonce, 'wp_rest' );
+}
 
 /**
  * GET service address
@@ -72,4 +82,3 @@ function hjm_floorcare_set_service_address($request)
         'address' => $address,
     ];
 }
-

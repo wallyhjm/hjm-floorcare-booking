@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // Safety check
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -10,7 +10,7 @@ if ( ! defined('HJM_FLOORCARE_SEED_DAYS') ) {
 }
 
 if ( ! defined('HJM_FLOORCARE_DEFAULT_WEEKDAY_MINUTES') ) {
-    define('HJM_FLOORCARE_DEFAULT_WEEKDAY_MINUTES', 480 * 2); // 2 crews × 8 hrs
+    define('HJM_FLOORCARE_DEFAULT_WEEKDAY_MINUTES', 480 * 2); // 2 crews x 8 hrs
 }
 
 
@@ -65,6 +65,7 @@ function hjm_floorcare_create_daily_capacity_table() {
             service_date DATE NOT NULL,
             total_minutes INT NOT NULL,
             is_closed TINYINT(1) NOT NULL DEFAULT 0,
+            is_override TINYINT(1) NOT NULL DEFAULT 0,
             notes VARCHAR(255) NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
@@ -85,7 +86,7 @@ function hjm_floorcare_seed_capacity_table() {
 
         $date = $today->modify( "+$i days" );
         $date_str = $date->format( 'Y-m-d' );
-        $weekday = (int) $date->format( 'N' ); // 1 (Mon) → 7 (Sun)
+        $weekday = (int) $date->format( 'N' ); // 1 (Mon) -> 7 (Sun)
 
         // Skip if already exists (preserve overrides)
         $exists = $wpdb->get_var(
@@ -108,12 +109,12 @@ function hjm_floorcare_seed_capacity_table() {
                 'service_date'  => $date_str,
                 'total_minutes' => $minutes,
                 'is_closed'     => $is_closed ? 1 : 0,
+                'is_override'   => 0,
                 'notes'         => null,
                 'created_at'    => current_time( 'mysql' ),
                 'updated_at'    => current_time( 'mysql' ),
             ],
-            [ '%s', '%d', '%d', '%s', '%s', '%s' ]
+            [ '%s', '%d', '%d', '%d', '%s', '%s', '%s' ]
         );
     }
 }
-

@@ -1,9 +1,11 @@
-<?php
+﻿<?php
 
 add_action('wp_ajax_floorcare_get_date_availability', 'hjm_floorcare_get_date_availability_ajax');
 add_action('wp_ajax_nopriv_floorcare_get_date_availability', 'hjm_floorcare_get_date_availability_ajax');
 
 function hjm_floorcare_get_date_availability_ajax() {
+
+    check_ajax_referer( 'hjm_floorcare_ajax', 'nonce' );
 
     $date = sanitize_text_field($_POST['date'] ?? '');
 
@@ -22,7 +24,7 @@ function hjm_floorcare_get_date_availability_ajax() {
     }
 
     // Threshold can be tuned later
-    if ( $availability['remaining'] <= 120 ) {
+    if ( $availability['remaining'] <= HJM_FLOORCARE_LIMITED_THRESHOLD_MINUTES ) {
         wp_send_json_success([
             'status'    => 'limited',
             'message'   => 'Limited availability. Some time slots may be unavailable.',

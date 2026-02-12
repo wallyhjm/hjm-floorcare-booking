@@ -1,4 +1,4 @@
-(function ($) {
+﻿(function ($) {
 
     let saveTimer = null;
     let recalcTimer = null;
@@ -66,6 +66,7 @@
 
                 const data = {
                     action: 'floorcare_update_address',
+                    nonce: context.nonce || '',
                     address: $('input[name="floorcare_address"]').val(),
                     apt: $('input[name="floorcare_apt"]').val(),
                     city: $('input[name="floorcare_city"]').val(),
@@ -187,10 +188,11 @@
 
             input.blur();
 
-            // 🔴 IMPORTANT: Google does not trigger input events
+            // Google does not trigger input events
             // We must explicitly save + recalc here
             const data = {
                 action: 'floorcare_update_address',
+                nonce: context.nonce || '',
                 address: $('input[name="floorcare_address"]').val(),
                 apt: $('input[name="floorcare_apt"]').val(),
                 city: $('input[name="floorcare_city"]').val(),
@@ -213,7 +215,7 @@
                     syncServiceToBilling();
                 }
 
-                // 🔑 Now force totals refresh
+                // Now force totals refresh
                 recalcTrigger();
             });
 

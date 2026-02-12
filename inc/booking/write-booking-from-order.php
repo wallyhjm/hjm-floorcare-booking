@@ -36,21 +36,26 @@ add_action('woocommerce_checkout_create_order', function ($order) {
         return;
     }
 
+    $start_minutes = hjm_floorcare_time_to_minutes( $time );
+    $end_minutes   = $start_minutes + $duration;
+
     $wpdb->insert(
         $table,
         [
             'order_id'        => $order_id,
             'booking_date'    => $date,
-            'booking_time'    => $time,
+            'start_time'      => hjm_floorcare_minutes_to_time( $start_minutes ),
+            'end_time'        => hjm_floorcare_minutes_to_time( $end_minutes ),
             'duration_minutes'=> $duration,
             'service_address' => $address,
             'trip_miles'      => $miles,
             'trip_fee'        => $fee,
-            'status'          => 'scheduled',
+            'status'          => 'confirmed',
             'created_at'      => current_time('mysql'),
         ],
         [
             '%d',
+            '%s',
             '%s',
             '%s',
             '%d',
@@ -62,6 +67,6 @@ add_action('woocommerce_checkout_create_order', function ($order) {
         ]
     );
 
-});
+}, 20);
 
 

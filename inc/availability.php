@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Floorcare Availability Engine
  *
@@ -74,8 +74,6 @@ function hjm_floorcare_get_booked_minutes( $service_date ) {
     );
 }
 
-
-
 /**
  * Get availability summary for a date
  */
@@ -149,7 +147,7 @@ function hjm_floorcare_get_availability_ui_state( $service_date ) {
     if ( $availability['remaining'] <= HJM_FLOORCARE_LIMITED_THRESHOLD_MINUTES ) {
         return [
             'status'  => 'limited',
-            'message' => 'Limited availability — fewer time slots remain.',
+            'message' => 'Limited availability - fewer time slots remain.',
         ];
     }
 
@@ -163,6 +161,8 @@ add_action( 'wp_ajax_floorcare_get_date_availability', 'hjm_floorcare_ajax_get_d
 add_action( 'wp_ajax_nopriv_floorcare_get_date_availability', 'hjm_floorcare_ajax_get_date_availability' );
 
 function hjm_floorcare_ajax_get_date_availability() {
+
+    check_ajax_referer( 'hjm_floorcare_ajax', 'nonce' );
 
     $date = sanitize_text_field( $_POST['date'] ?? '' );
 
@@ -196,11 +196,11 @@ function hjm_floorcare_ajax_get_date_availability() {
         ]);
     }
 
-    // Limited threshold (configurable later)
+    // Limited threshold
     $status  = 'available';
     $message = 'Availability available';
 
-    if ( $availability['remaining'] < 240 ) { // < 4 hours
+    if ( $availability['remaining'] <= HJM_FLOORCARE_LIMITED_THRESHOLD_MINUTES ) {
         $status  = 'limited';
         $message = 'Limited availability remaining';
     }
@@ -214,4 +214,3 @@ function hjm_floorcare_ajax_get_date_availability() {
         'message'   => $message,
     ]);
 }
-

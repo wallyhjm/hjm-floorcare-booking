@@ -1,6 +1,12 @@
-<?php
+﻿<?php
 
+// Optional test hook to seed cart for development only.
+// Enable by defining HJM_FLOORCARE_ENABLE_TEST_HOOK to true.
 add_action('wp_loaded', function () {
+
+    if ( ! defined('HJM_FLOORCARE_ENABLE_TEST_HOOK') || ! HJM_FLOORCARE_ENABLE_TEST_HOOK ) {
+        return;
+    }
 
     if (!isset($_GET['floorcare_test'])) {
         return;

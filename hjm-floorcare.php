@@ -36,7 +36,6 @@ require_once HJM_FLOORCARE_PATH . 'inc/booking/bookings-table.php';
  * -------------------------------------------------
  */
 require_once HJM_FLOORCARE_PATH . 'inc/booking/slot-engine.php';
-require_once HJM_FLOORCARE_PATH . 'inc/booking/booking-create.php';
 require_once HJM_FLOORCARE_PATH . 'inc/booking/write-booking-from-order.php';
 
 /**

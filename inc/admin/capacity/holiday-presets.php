@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if ( ! defined('ABSPATH') ) exit;
 
 /**
@@ -8,7 +8,7 @@ function hjm_floorcare_get_holiday_presets( $year ) {
 
     return [
         // Fixed-date holidays
-        "$year-01-01" => 'New Year’s Day',
+        "$year-01-01" => 'New Year\'s Day',
         "$year-07-04" => 'Independence Day',
         "$year-11-11" => 'Veterans Day',
         "$year-12-25" => 'Christmas Day',
@@ -16,7 +16,7 @@ function hjm_floorcare_get_holiday_presets( $year ) {
 
         // Computed holidays
         date('Y-m-d', strtotime("third monday of january $year")) => 'MLK Day',
-        date('Y-m-d', strtotime("third monday of february $year")) => 'Presidents’ Day',
+        date('Y-m-d', strtotime("third monday of february $year")) => 'Presidents\' Day',
         date('Y-m-d', strtotime("last monday of may $year")) => 'Memorial Day',
         date('Y-m-d', strtotime("first monday of september $year")) => 'Labor Day',
         date('Y-m-d', strtotime("fourth thursday of november $year")) => 'Thanksgiving',
@@ -56,4 +56,3 @@ add_action('wp_ajax_hjm_apply_holiday_presets', function () {
         'year'    => $year,
     ]);
 });
-

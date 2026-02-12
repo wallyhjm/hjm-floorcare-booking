@@ -32,6 +32,7 @@ add_action('wp_ajax_nopriv_floorcare_update_address', 'hjm_floorcare_update_addr
 
 function hjm_floorcare_update_address()
 {
+    check_ajax_referer( 'hjm_floorcare_ajax', 'nonce' );
 
     $address = [
         'address' => sanitize_text_field($_POST['address'] ?? ''),
