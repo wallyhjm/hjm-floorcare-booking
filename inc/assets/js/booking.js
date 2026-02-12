@@ -6,13 +6,20 @@
     let timer = null;
 
     function fetchSlots(date) {
-        return $.post(ctx.ajaxUrl, {
-            action: 'floorcare_get_slots',
-            nonce: ctx.nonce || '',
-            date: date
-        }).then(resp => {
+        return $.post(
+            ctx.ajaxUrl,
+            {
+                action: 'floorcare_get_slots',
+                nonce: ctx.nonce || '',
+                date: date
+            },
+            null,
+            'json'
+        ).then(resp => {
             if (!resp || !resp.success) return [];
             return resp.data || [];
+        }).fail(function () {
+            return [];
         });
     }
 
@@ -53,11 +60,19 @@
     }
 
     function fetchAvailability(date) {
-        return $.post(ctx.ajaxUrl, {
-            action: 'floorcare_get_date_availability',
-            nonce: ctx.nonce || '',
-            date: date
-        }).then(resp => resp?.success ? resp.data : null);
+        return $.post(
+            ctx.ajaxUrl,
+            {
+                action: 'floorcare_get_date_availability',
+                nonce: ctx.nonce || '',
+                date: date
+            },
+            null,
+            'json'
+        ).then(resp => resp?.success ? resp.data : null)
+            .fail(function () {
+                return null;
+            });
     }
 
     // Date change
@@ -81,7 +96,10 @@
             if (!state) {
                 $msg.hide();
                 $time.prop('disabled', false);
-                return;
+                // Still attempt to load slots if availability endpoint fails.
+                return fetchSlots(date).then(times => {
+                    populateTimes($container, times);
+                });
             }
 
             if (state.status === 'none') {
@@ -99,7 +117,7 @@
 
             // Only fetch slots if date is usable
             if (state.status !== 'none') {
-                fetchSlots(date).then(times => {
+                return fetchSlots(date).then(times => {
                     populateTimes($container, times);
                 });
             }
