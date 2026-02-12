@@ -36,11 +36,14 @@ add_action('wp_enqueue_scripts', function () {
 
     if ( is_cart() || is_checkout() ) {
 
+        $booking_js = HJM_FLOORCARE_PATH . 'inc/assets/js/booking.js';
+        $booking_ver = file_exists( $booking_js ) ? filemtime( $booking_js ) : '1.0.0';
+
         wp_enqueue_script(
             'hjm-floorcare-booking',
             HJM_FLOORCARE_URL . 'inc/assets/js/booking.js',
             ['jquery'],
-            '1.0.0',
+            $booking_ver,
             true
         );
 
