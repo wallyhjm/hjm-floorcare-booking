@@ -33,11 +33,12 @@
         }, null, 'json');
     }
 
-    function syncDateState($container, date) {
+    function syncDateState($container, date, preserveSelection) {
         const $time = $container.find('[name="floorcare_booking_time"]');
         const $msg = $container.find('.floorcare-availability-message');
+        const selectedBeforeRefresh = preserveSelection ? ($time.val() || '') : '';
 
-        populateTimes($container, []);
+        populateTimes($container, [], '');
 
         if (!date) {
             setBooking('', '');
@@ -51,7 +52,7 @@
                 $time.prop('disabled', false);
                 // Still attempt to load slots if availability endpoint fails.
                 return fetchSlots(date).then(times => {
-                    populateTimes($container, times);
+                    populateTimes($container, times, selectedBeforeRefresh);
                 });
             }
 
@@ -71,13 +72,13 @@
             // Only fetch slots if date is usable
             if (state.status !== 'none') {
                 return fetchSlots(date).then(times => {
-                    populateTimes($container, times);
+                    populateTimes($container, times, selectedBeforeRefresh);
                 });
             }
         });
     }
 
-    function populateTimes($container, times) {
+    function populateTimes($container, times, preferredValue) {
         const $sel = $container.find('[name="floorcare_booking_time"]');
         $sel.prop('disabled', true);
 
@@ -95,7 +96,8 @@
             $sel.append($('<option>', { value: t, text: t }));
         });
 
-        $sel.val('');
+        const shouldKeep = preferredValue && times.indexOf(preferredValue) !== -1;
+        $sel.val(shouldKeep ? preferredValue : '');
 
         if (times.length === 0) {
             $sel.after(
@@ -125,7 +127,7 @@
 
         const $container = jQuery(this).closest('.floorcare-booking');
         const date = jQuery(this).val();
-        syncDateState($container, date);
+        syncDateState($container, date, false);
     });
 
 
@@ -167,13 +169,22 @@
         });
     });
 
+    function refreshBookingUi(preserveSelection) {
+        $('.floorcare-booking').each(function () {
+            const $container = $(this);
+            const date = $container.find('[name="floorcare_booking_date"]').val();
+            if (date) {
+                syncDateState($container, date, !!preserveSelection);
+            }
+        });
+    }
+
     // Initial load: if date already selected in session/UI, fetch available times immediately.
-    $('.floorcare-booking').each(function () {
-        const $container = $(this);
-        const date = $container.find('[name="floorcare_booking_date"]').val();
-        if (date) {
-            syncDateState($container, date);
-        }
+    refreshBookingUi(true);
+
+    // Woo can re-render cart/checkout fragments; re-hydrate time options after refresh.
+    $(document.body).on('updated_wc_div updated_cart_totals updated_checkout', function () {
+        refreshBookingUi(true);
     });
 
 })(jQuery);

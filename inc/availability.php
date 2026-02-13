@@ -33,9 +33,17 @@ function hjm_floorcare_get_daily_capacity( $service_date ) {
     );
 
     if ( ! $row ) {
+        $default_weekday_minutes = defined( 'HJM_FLOORCARE_DEFAULT_WEEKDAY_MINUTES' )
+            ? (int) HJM_FLOORCARE_DEFAULT_WEEKDAY_MINUTES
+            : 480;
+
+        $ts = strtotime( $service_date . ' 00:00:00' );
+        $weekday = $ts ? (int) wp_date( 'N', $ts, wp_timezone() ) : 0;
+        $is_weekend = ( $weekday >= 6 );
+
         return [
-            'capacity'  => 0,
-            'is_closed' => true,
+            'capacity'  => $is_weekend ? 0 : $default_weekday_minutes,
+            'is_closed' => $is_weekend,
         ];
     }
 
