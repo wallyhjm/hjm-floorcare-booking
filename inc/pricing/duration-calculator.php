@@ -33,6 +33,11 @@ function hjm_floorcare_calculate_item_duration( $cart_item ) {
     if ( ! empty( $cart_item['floorcare_addons'] ) ) {
 
         foreach ( $cart_item['floorcare_addons'] as $addon_id ) {
+            $addon_id = (int) $addon_id;
+
+            if ( $addon_id <= 0 || get_post_type( $addon_id ) !== 'floorcare_addon' ) {
+                continue;
+            }
 
             $addon_minutes = (int) get_post_meta( $addon_id, '_addon_duration', true );
             $per_unit      = get_post_meta( $addon_id, '_addon_per_unit', true ) === 'yes';

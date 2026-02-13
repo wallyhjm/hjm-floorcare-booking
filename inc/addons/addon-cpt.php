@@ -40,6 +40,20 @@ function hjm_floorcare_addon_meta_box($post) {
     $duration  = get_post_meta($post->ID, '_addon_duration', true);
     $applies   = (array) get_post_meta($post->ID, '_addon_applies_to', true);
     $per_unit  = get_post_meta($post->ID, '_addon_per_unit', true);
+    $price_model = get_post_meta($post->ID, '_addon_price_model', true);
+    $price_tiers = get_post_meta($post->ID, '_addon_price_tiers', true);
+
+    if (!is_array($price_tiers)) {
+        $price_tiers = [];
+    }
+
+    $tiers_text = '';
+    foreach ($price_tiers as $tier) {
+        $min = isset($tier['min']) ? (int) $tier['min'] : 0;
+        $max = isset($tier['max']) && $tier['max'] !== '' ? (int) $tier['max'] : '';
+        $tier_price = isset($tier['price']) ? (float) $tier['price'] : 0;
+        $tiers_text .= $min . ',' . ($max === '' ? '*' : $max) . ',' . $tier_price . "\n";
+    }
 
     wp_nonce_field('floorcare_addon_save', 'floorcare_addon_nonce');
     ?>
@@ -47,6 +61,21 @@ function hjm_floorcare_addon_meta_box($post) {
     <p>
         <label><strong>Price increase ($)</strong></label><br>
         <input type="number" step="0.01" name="addon_price" value="<?php echo esc_attr($price); ?>">
+    </p>
+
+    <p>
+        <label><strong>Price model</strong></label><br>
+        <select name="addon_price_model">
+            <option value="flat" <?php selected($price_model, 'flat'); ?>>Flat (once per line item)</option>
+            <option value="per_unit" <?php selected($price_model, 'per_unit'); ?>>Per unit (per room/item/rug)</option>
+            <option value="tiered_flat" <?php selected($price_model, 'tiered_flat'); ?>>Tiered flat (qty ranges)</option>
+        </select>
+    </p>
+
+    <p>
+        <label><strong>Tiered pricing rules</strong></label><br>
+        <textarea name="addon_price_tiers" rows="5" cols="60" placeholder="1,5,30&#10;6,*,60"><?php echo esc_textarea(trim($tiers_text)); ?></textarea><br>
+        <small>One tier per line: <code>min,max,price</code>. Use <code>*</code> for no max. Example: <code>1,5,30</code> then <code>6,*,60</code>.</small>
     </p>
 
     <p>
@@ -59,6 +88,7 @@ function hjm_floorcare_addon_meta_box($post) {
 
         <?php
         $types = [
+            'all'        => 'All Services',
             'carpet'     => 'Carpet Cleaning',
             'rug'        => 'Area Rugs',
             'upholstery' => 'Furniture / Upholstery',
@@ -95,8 +125,22 @@ add_action('save_post_floorcare_addon', function ($post_id) {
         return;
     }
 
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    $price_model = sanitize_text_field($_POST['addon_price_model'] ?? 'flat');
+    if (!in_array($price_model, ['flat', 'per_unit', 'tiered_flat'], true)) {
+        $price_model = 'flat';
+    }
+
     update_post_meta($post_id, '_addon_price', floatval($_POST['addon_price'] ?? 0));
     update_post_meta($post_id, '_addon_duration', intval($_POST['addon_duration'] ?? 0));
+    update_post_meta($post_id, '_addon_price_model', $price_model);
 
     update_post_meta(
         $post_id,
@@ -109,6 +153,44 @@ add_action('save_post_floorcare_addon', function ($post_id) {
         '_addon_per_unit',
         isset($_POST['addon_per_unit']) ? 'yes' : 'no'
     );
+
+    $raw_tiers = sanitize_textarea_field($_POST['addon_price_tiers'] ?? '');
+    $lines = preg_split('/\r\n|\r|\n/', $raw_tiers);
+    $tiers = [];
+
+    foreach ((array) $lines as $line) {
+        $line = trim($line);
+        if ($line === '') {
+            continue;
+        }
+
+        $parts = array_map('trim', explode(',', $line));
+        if (count($parts) !== 3) {
+            continue;
+        }
+
+        $min = max(1, (int) $parts[0]);
+        $max = $parts[1] === '*' ? '' : max($min, (int) $parts[1]);
+        $tier_price = (float) $parts[2];
+
+        if ($tier_price < 0) {
+            $tier_price = 0;
+        }
+
+        $tiers[] = [
+            'min' => $min,
+            'max' => $max,
+            'price' => $tier_price,
+        ];
+    }
+
+    if (!empty($tiers)) {
+        usort($tiers, static function ($a, $b) {
+            return (int) $a['min'] <=> (int) $b['min'];
+        });
+    }
+
+    update_post_meta($post_id, '_addon_price_tiers', $tiers);
 });
 
 
