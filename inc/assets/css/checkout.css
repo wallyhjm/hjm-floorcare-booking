@@ -32,3 +32,14 @@
     color: #d32f2f;
     font-weight: 600;
 }
+
+/* Google Places dropdown: show more of long street addresses */
+.pac-container {
+    min-width: 420px !important;
+    max-width: min(720px, 92vw) !important;
+}
+
+.pac-item,
+.pac-item-query {
+    white-space: nowrap;
+}
