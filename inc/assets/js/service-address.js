@@ -6,6 +6,7 @@
 
     let isTypingAddress = false;
     let isAutocompleteActive = false;
+    let googleReadyTimer = null;
 
     const context = window.floorcareAddressContext || {};
     const isCheckout = !!context.isCheckout;
@@ -226,12 +227,47 @@
 
     }
 
+    function initAutocompleteWhenReady() {
+        if (googleReadyTimer) {
+            clearInterval(googleReadyTimer);
+            googleReadyTimer = null;
+        }
+
+        const tryInit = function () {
+            if (
+                typeof google === 'undefined' ||
+                !google.maps ||
+                !google.maps.places
+            ) {
+                return false;
+            }
+
+            initAutocomplete();
+            return true;
+        };
+
+        if (tryInit()) {
+            return;
+        }
+
+        let attempts = 0;
+        const maxAttempts = 40; // 10s max
+
+        googleReadyTimer = setInterval(function () {
+            attempts++;
+            if (tryInit() || attempts >= maxAttempts) {
+                clearInterval(googleReadyTimer);
+                googleReadyTimer = null;
+            }
+        }, 250);
+    }
+
     /* ------------------------------------
      * Init + survive Woo refreshes
      * ------------------------------------ */
     $(document).ready(function () {
         if (!isCheckout || $('#service-address-edit').is(':visible')) {
-            initAutocomplete();
+            initAutocompleteWhenReady();
         }
     });
 
@@ -242,7 +278,7 @@
             autocomplete = null;
 
             if (!isCheckout || $('#service-address-edit').is(':visible')) {
-                initAutocomplete();
+                initAutocompleteWhenReady();
             }
         }
     );
