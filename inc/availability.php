@@ -162,7 +162,9 @@ add_action( 'wp_ajax_nopriv_floorcare_get_date_availability', 'hjm_floorcare_aja
 
 function hjm_floorcare_ajax_get_date_availability() {
 
-    check_ajax_referer( 'hjm_floorcare_ajax', 'nonce' );
+    if ( ! check_ajax_referer( 'hjm_floorcare_ajax', 'nonce', false ) ) {
+        wp_send_json_error([ 'message' => 'Invalid nonce.' ], 403);
+    }
 
     $date = sanitize_text_field( $_POST['date'] ?? '' );
 

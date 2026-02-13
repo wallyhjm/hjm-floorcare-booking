@@ -67,7 +67,9 @@ add_action('wp_ajax_nopriv_floorcare_get_slots', 'hjm_floorcare_ajax_get_slots')
 
 function hjm_floorcare_ajax_get_slots() {
 
-    check_ajax_referer( 'hjm_floorcare_ajax', 'nonce' );
+    if ( ! check_ajax_referer( 'hjm_floorcare_ajax', 'nonce', false ) ) {
+        wp_send_json_error([ 'message' => 'Invalid nonce.' ], 403);
+    }
 
     if ( ! function_exists('hjm_floorcare_get_available_slots') ) {
         wp_send_json_error(['message' => 'Availability engine not loaded.'], 500);
@@ -92,7 +94,9 @@ add_action('wp_ajax_nopriv_floorcare_set_booking', 'hjm_floorcare_ajax_set_booki
 
 function hjm_floorcare_ajax_set_booking() {
 
-    check_ajax_referer( 'hjm_floorcare_ajax', 'nonce' );
+    if ( ! check_ajax_referer( 'hjm_floorcare_ajax', 'nonce', false ) ) {
+        wp_send_json_error([ 'message' => 'Invalid nonce.' ], 403);
+    }
 
     $date = sanitize_text_field($_POST['date'] ?? '');
     $time = sanitize_text_field($_POST['time'] ?? '');
