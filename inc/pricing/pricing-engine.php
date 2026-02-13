@@ -29,11 +29,20 @@ add_action('hjm_floorcare_woocommerce_ready', function () {
 
             $qty = max(1, (int) ($cart_item['quantity'] ?? 1));
             $base_price = 160.0;
-            $addons_total = function_exists('hjm_floorcare_calculate_addons_total_for_cart_item')
-                ? (float) hjm_floorcare_calculate_addons_total_for_cart_item($cart_item)
-                : 0.0;
 
-            $unit_price = $base_price + ($addons_total / $qty);
+            if (function_exists('hjm_floorcare_is_addon_cart_item') && hjm_floorcare_is_addon_cart_item($cart_item)) {
+                $addon_id = (int) ($cart_item['floorcare_addon_id'] ?? 0);
+
+                if ($addon_id > 0 && function_exists('hjm_floorcare_get_addon_price_for_qty')) {
+                    $addon_total = (float) hjm_floorcare_get_addon_price_for_qty($addon_id, $qty);
+                    $unit_price = $addon_total / $qty;
+                } else {
+                    $unit_price = 0.0;
+                }
+            } else {
+                $unit_price = $base_price;
+            }
+
             $cart_item['data']->set_price(max(0, (float) $unit_price));
         }
     });

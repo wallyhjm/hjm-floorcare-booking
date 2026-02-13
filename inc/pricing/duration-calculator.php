@@ -7,15 +7,36 @@ function hjm_floorcare_calculate_item_duration( $cart_item ) {
 
     $product = $cart_item['data'];
 
+    // Quantity = rooms / items
+    $qty = max( 1, (int) $cart_item['quantity'] );
+
+    if ( function_exists( 'hjm_floorcare_is_addon_cart_item' ) && hjm_floorcare_is_addon_cart_item( $cart_item ) ) {
+        $addon_id = (int) ( $cart_item['floorcare_addon_id'] ?? 0 );
+
+        if ( $addon_id <= 0 || get_post_type( $addon_id ) !== 'floorcare_addon' ) {
+            return 0;
+        }
+
+        $addon_minutes = (int) get_post_meta( $addon_id, '_addon_duration', true );
+        $per_unit      = get_post_meta( $addon_id, '_addon_per_unit', true ) === 'yes';
+
+        if ( $addon_minutes <= 0 ) {
+            return 0;
+        }
+
+        $duration = $per_unit
+            ? $addon_minutes * $qty
+            : $addon_minutes;
+
+        return (int) ceil( $duration );
+    }
+
     // Base duration per unit (minutes)
     $base = (int) $product->get_meta('_floorcare_base_duration');
 
     if ( $base <= 0 ) {
         return 0;
     }
-
-    // Quantity = rooms / items
-    $qty = max( 1, (int) $cart_item['quantity'] );
 
     // Variation multiplier
     $multiplier = 1;
@@ -28,29 +49,6 @@ function hjm_floorcare_calculate_item_duration( $cart_item ) {
     }
 
     $duration = $base * $qty * $multiplier;
-
-    // Add-ons
-    if ( ! empty( $cart_item['floorcare_addons'] ) ) {
-
-        foreach ( $cart_item['floorcare_addons'] as $addon_id ) {
-            $addon_id = (int) $addon_id;
-
-            if ( $addon_id <= 0 || get_post_type( $addon_id ) !== 'floorcare_addon' ) {
-                continue;
-            }
-
-            $addon_minutes = (int) get_post_meta( $addon_id, '_addon_duration', true );
-            $per_unit      = get_post_meta( $addon_id, '_addon_per_unit', true ) === 'yes';
-
-            if ( $addon_minutes <= 0 ) {
-                continue;
-            }
-
-            $duration += $per_unit
-                ? $addon_minutes * $qty
-                : $addon_minutes;
-        }
-    }
 
     return (int) ceil( $duration );
 }

@@ -213,6 +213,115 @@ function hjm_floorcare_calculate_addons_total_for_cart_item($cart_item)
     return (float) $total;
 }
 
+function hjm_floorcare_is_addon_cart_item($cart_item)
+{
+    return !empty($cart_item['floorcare_is_addon_line']) && !empty($cart_item['floorcare_addon_id']);
+}
+
+function hjm_floorcare_sync_addon_cart_lines($cart)
+{
+    if (!($cart instanceof WC_Cart)) {
+        return;
+    }
+
+    static $sync_in_progress = false;
+
+    if ($sync_in_progress) {
+        return;
+    }
+
+    $sync_in_progress = true;
+    $did_change = false;
+
+    try {
+        $items = $cart->get_cart();
+        $addon_children = [];
+
+        foreach ($items as $cart_item_key => $cart_item) {
+            if (!hjm_floorcare_is_addon_cart_item($cart_item)) {
+                continue;
+            }
+
+            $parent_key = sanitize_text_field($cart_item['floorcare_parent_key'] ?? '');
+            $addon_id = (int) ($cart_item['floorcare_addon_id'] ?? 0);
+
+            if ($parent_key === '' || $addon_id <= 0) {
+                $cart->remove_cart_item($cart_item_key);
+                $did_change = true;
+                continue;
+            }
+
+            if (!isset($items[$parent_key])) {
+                $cart->remove_cart_item($cart_item_key);
+                $did_change = true;
+                continue;
+            }
+
+            if (!isset($addon_children[$parent_key])) {
+                $addon_children[$parent_key] = [];
+            }
+
+            $addon_children[$parent_key][$addon_id] = $cart_item_key;
+
+            $parent_qty = max(1, (int) ($items[$parent_key]['quantity'] ?? 1));
+            $child_qty = max(1, (int) ($cart_item['quantity'] ?? 1));
+
+            if ($child_qty !== $parent_qty) {
+                $cart->set_quantity($cart_item_key, $parent_qty, false);
+                $did_change = true;
+            }
+        }
+
+        foreach ($items as $parent_key => $cart_item) {
+            if (hjm_floorcare_is_addon_cart_item($cart_item)) {
+                continue;
+            }
+
+            $addon_ids = array_values(array_unique(array_filter(array_map('intval', (array) ($cart_item['floorcare_addons'] ?? [])))));
+
+            if (empty($addon_ids)) {
+                continue;
+            }
+
+            $product_id = (int) ($cart_item['product_id'] ?? 0);
+            $variation_id = (int) ($cart_item['variation_id'] ?? 0);
+            $variation = isset($cart_item['variation']) && is_array($cart_item['variation']) ? $cart_item['variation'] : [];
+            $qty = max(1, (int) ($cart_item['quantity'] ?? 1));
+
+            foreach ($addon_ids as $addon_id) {
+                if (isset($addon_children[$parent_key][$addon_id])) {
+                    continue;
+                }
+
+                $cart->add_to_cart(
+                    $product_id,
+                    $qty,
+                    $variation_id,
+                    $variation,
+                    [
+                        'floorcare_is_addon_line' => true,
+                        'floorcare_addon_id'      => (int) $addon_id,
+                        'floorcare_parent_key'    => $parent_key,
+                        'floorcare_addon_key'     => md5($parent_key . '|' . (int) $addon_id),
+                    ]
+                );
+                $did_change = true;
+            }
+
+            if (isset($cart->cart_contents[$parent_key]['floorcare_addons'])) {
+                unset($cart->cart_contents[$parent_key]['floorcare_addons']);
+                $did_change = true;
+            }
+        }
+    } finally {
+        $sync_in_progress = false;
+    }
+
+    if ($did_change) {
+        $cart->set_session();
+    }
+}
+
 function hjm_floorcare_get_addon_price_label($addon_id)
 {
     $addon_id = (int) $addon_id;
@@ -322,6 +431,10 @@ add_action('woocommerce_before_add_to_cart_button', function () {
 
 add_filter('woocommerce_add_cart_item_data', function ($cart_item_data, $product_id) {
 
+    if (!empty($cart_item_data['floorcare_is_addon_line'])) {
+        return $cart_item_data;
+    }
+
     if (!empty($_POST['floorcare_addons'])) {
         $product = wc_get_product($product_id);
         if (isset($_POST['variation_id']) && (int) $_POST['variation_id'] > 0) {
@@ -343,15 +456,28 @@ add_filter('woocommerce_add_cart_item_data', function ($cart_item_data, $product
 
 add_filter('woocommerce_get_item_data', function ($item_data, $cart_item) {
 
-    if (empty($cart_item['floorcare_addons'])) {
+    if (!hjm_floorcare_is_addon_cart_item($cart_item)) {
         return $item_data;
     }
 
-    foreach ($cart_item['floorcare_addons'] as $addon_id) {
+    $parent_key = sanitize_text_field($cart_item['floorcare_parent_key'] ?? '');
+    $addon_id = (int) ($cart_item['floorcare_addon_id'] ?? 0);
+
+    if ($addon_id > 0) {
         $item_data[] = [
             'name'  => 'Add-on',
             'value' => get_the_title($addon_id),
         ];
+    }
+
+    if ($parent_key !== '' && WC()->cart) {
+        $parent_item = WC()->cart->get_cart_item($parent_key);
+        if (!empty($parent_item['data']) && is_object($parent_item['data'])) {
+            $item_data[] = [
+                'name'  => 'For',
+                'value' => $parent_item['data']->get_name(),
+            ];
+        }
     }
 
     return $item_data;
@@ -359,37 +485,51 @@ add_filter('woocommerce_get_item_data', function ($item_data, $cart_item) {
 
 add_action('woocommerce_checkout_create_order_line_item', function ($item, $cart_item_key, $values) {
 
-    if (empty($values['floorcare_addons'])) {
+    if (!hjm_floorcare_is_addon_cart_item($values)) {
         return;
     }
 
-    $qty = max(1, (int) ($values['quantity'] ?? 1));
-    $labels = [];
-    $total = 0.0;
-
-    foreach ((array) $values['floorcare_addons'] as $addon_id) {
-        $addon_id = (int) $addon_id;
-        if ($addon_id <= 0) {
-            continue;
-        }
-
-        $name = get_the_title($addon_id);
-        if ($name === '') {
-            continue;
-        }
-
-        $price = hjm_floorcare_get_addon_price_for_qty($addon_id, $qty);
-        $total += $price;
-
-        $labels[] = sprintf('%s ($%s)', $name, wc_format_decimal($price, 2));
+    $addon_id = (int) ($values['floorcare_addon_id'] ?? 0);
+    if ($addon_id <= 0) {
+        return;
     }
 
-    if (!empty($labels)) {
-        $item->add_meta_data('Add-ons', implode(', ', $labels), true);
-        $item->add_meta_data('_floorcare_addons', wp_json_encode(array_values($values['floorcare_addons'])), true);
+    $addon_name = get_the_title($addon_id);
+    if ($addon_name !== '') {
+        $item->set_name($addon_name);
     }
 
-    if ($total > 0) {
-        $item->add_meta_data('_floorcare_addons_total', wc_format_decimal($total, 2), true);
+    $item->add_meta_data('_floorcare_addon_id', $addon_id, true);
+}, 10, 3);
+
+add_action('woocommerce_before_calculate_totals', function ($cart) {
+    hjm_floorcare_sync_addon_cart_lines($cart);
+}, 5);
+
+add_filter('woocommerce_cart_item_name', function ($name, $cart_item) {
+    if (!hjm_floorcare_is_addon_cart_item($cart_item)) {
+        return $name;
     }
+
+    $addon_name = get_the_title((int) ($cart_item['floorcare_addon_id'] ?? 0));
+    if ($addon_name === '') {
+        return esc_html__('Service Add-on', 'hjm-floorcare');
+    }
+
+    return esc_html($addon_name);
+}, 10, 2);
+
+add_filter('woocommerce_cart_item_quantity', function ($product_quantity, $cart_item_key, $cart_item) {
+    if (!hjm_floorcare_is_addon_cart_item($cart_item)) {
+        return $product_quantity;
+    }
+
+    $qty = max(1, (int) ($cart_item['quantity'] ?? 1));
+
+    return sprintf(
+        '<span class="quantity">%1$s</span><input type="hidden" name="cart[%2$s][qty]" value="%3$d">',
+        esc_html($qty),
+        esc_attr($cart_item_key),
+        $qty
+    );
 }, 10, 3);
