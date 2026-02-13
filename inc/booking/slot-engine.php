@@ -35,6 +35,12 @@ function hjm_floorcare_get_booking_config() {
  * Get total job duration in minutes
  */
 function hjm_floorcare_get_job_duration_minutes() {
+    if ( function_exists( 'wc_load_cart' ) ) {
+        if ( ! WC()->cart ) {
+            wc_load_cart();
+        }
+    }
+
     $duration = (int) hjm_floorcare_calculate_cart_duration();
 
     if ( $duration > 0 ) {

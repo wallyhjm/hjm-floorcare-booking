@@ -71,6 +71,11 @@ function hjm_floorcare_ajax_get_slots() {
         wp_send_json_error([ 'message' => 'Invalid nonce.' ], 403);
     }
 
+    // Ensure WC session/cart is loaded for AJAX requests.
+    if ( function_exists( 'wc_load_cart' ) ) {
+        wc_load_cart();
+    }
+
     if ( ! function_exists('hjm_floorcare_get_available_slots') ) {
         wp_send_json_error(['message' => 'Availability engine not loaded.'], 500);
     }
@@ -96,6 +101,10 @@ function hjm_floorcare_ajax_set_booking() {
 
     if ( ! check_ajax_referer( 'hjm_floorcare_ajax', 'nonce', false ) ) {
         wp_send_json_error([ 'message' => 'Invalid nonce.' ], 403);
+    }
+
+    if ( function_exists( 'wc_load_cart' ) ) {
+        wc_load_cart();
     }
 
     $date = sanitize_text_field($_POST['date'] ?? '');
