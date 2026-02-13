@@ -15,12 +15,13 @@
             },
             null,
             'json'
-        ).then(resp => {
-            if (!resp || !resp.success) return [];
-            return resp.data || [];
-        }).fail(function () {
-            return [];
-        });
+        ).then(
+            resp => {
+                if (!resp || !resp.success) return [];
+                return resp.data || [];
+            },
+            () => []
+        );
     }
 
     function setBooking(date, time) {
@@ -69,10 +70,10 @@
             },
             null,
             'json'
-        ).then(resp => resp?.success ? resp.data : null)
-            .fail(function () {
-                return null;
-            });
+        ).then(
+            resp => resp?.success ? resp.data : null,
+            () => null
+        );
     }
 
     // Date change
