@@ -19,6 +19,14 @@ Tech stack:
 
 ---
 
+## Documentation Map
+
+- `AGENTS.md` defines architecture, guardrails, and policy-level rules.
+- `PATTERNS.md` defines copy/paste-ready implementation patterns.
+- If naming conventions, table strategy, nonce strategy, or AJAX patterns change, update both files in the same commit.
+
+---
+
 ## Environment
 
 - Hosted on Plesk (Linux)
@@ -30,13 +38,13 @@ Tech stack:
 
 ## File Structure
 
-- `hjm-floorcare-booking.php` → main bootstrap file
-- `/inc/` → core PHP logic (AJAX handlers, services, DB access)
-- `/assets/js/` → frontend scripts
-- `/assets/css/` → styles
-- `/templates/` → optional frontend markup
+- `hjm-floorcare.php` -> main bootstrap file
+- `/inc/` -> core PHP logic (AJAX handlers, services, DB access)
+- `/inc/assets/js/` -> frontend scripts
+- `/inc/assets/css/` -> styles
+- `/inc/booking/booking-ui.php` -> booking UI markup
 
-Shared logic must live in `/inc/`.  
+Shared logic must live in `/inc/`.
 Avoid putting business logic in the main plugin file.
 
 ---
@@ -50,18 +58,18 @@ WordPress is configured with:
 flcwp_
 ```
 
-When using `$wpdb`, always append only the table suffix:
+When using `$wpdb`, append only the plugin table suffix:
 
 ```php
-$table = $wpdb->prefix . 'bookings';
+$table = $wpdb->prefix . 'hjm_floorcare_bookings';
 ```
 
 Do not append `flcwp_` again in code.
 
 ### Example Tables
-- flcwp_bookings
-- flcwp_services
-- flcwp_locations
+- flcwp_hjm_floorcare_bookings
+- flcwp_hjm_floorcare_daily_capacity
+- flcwp_hjm_floorcare_distance_cache
 
 ### Query Rules
 
@@ -74,14 +82,14 @@ Do not append `flcwp_` again in code.
 ```php
 global $wpdb;
 
-$table = $wpdb->prefix . 'bookings';
+$table = $wpdb->prefix . 'hjm_floorcare_bookings';
 
 $sql = $wpdb->prepare(
-    "SELECT * FROM {$table} WHERE id = %d",
+    "SELECT id, booking_date, start_time, end_time, status FROM {$table} WHERE id = %d",
     $booking_id
 );
 
-$result = $wpdb->get_row($sql);
+$result = $wpdb->get_row($sql, ARRAY_A);
 ```
 
 ---
@@ -137,7 +145,7 @@ Never trust `$_POST` or `$_GET`.
 ### Pattern
 
 ```js
-$(document).on('click', '.flcwp-button', function () {
+$(document).on('change', '[name="floorcare_booking_time"]', function () {
     // handler logic
 });
 ```
@@ -160,7 +168,8 @@ define('HJM_GOOGLE_API_KEY', '');
 define('HJM_GOOGLE_PLACES_API_KEY', '');
 ```
 
-- Pass keys to JS via `wp_localize_script`
+- Pass browser-safe restricted keys to JS via `wp_localize_script`
+- Keep privileged keys server-side only
 - Avoid unnecessary API calls
 - Cache results when possible
 
@@ -203,7 +212,7 @@ Prefer extending existing functions over rewriting them.
 ## Performance Considerations
 
 - Avoid large unbounded queries in AJAX handlers
-- Add indexes to `flcwp_` tables when appropriate
+- Add indexes to `hjm_floorcare_` tables when appropriate
 - Cache expensive lookups
 - Minimize Google API calls
 
@@ -241,6 +250,7 @@ Prefer extending existing functions over rewriting them.
 When adding features:
 
 - Follow existing naming conventions
-- Reuse patterns in this document
+- Reuse patterns in `PATTERNS.md`
 - Maintain security and validation rules
 - Keep frontend and backend responsibilities separated
+- Keep `AGENTS.md` and `PATTERNS.md` synchronized when conventions change
