@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 require_once HJM_FLOORCARE_PATH . 'inc/pricing/trip-charge-rates.php';
 require_once HJM_FLOORCARE_PATH . 'inc/pricing/trip-charge-calculator.php';

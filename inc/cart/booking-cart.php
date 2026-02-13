@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Cart booking date/time UI + AJAX persistence
  */

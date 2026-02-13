@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // Safety check
 if ( ! defined( 'ABSPATH' ) ) {
     exit;

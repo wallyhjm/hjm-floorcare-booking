@@ -1,4 +1,4 @@
-﻿(function ($) {
+(function ($) {
 
     const ctx = window.floorcareBookingContext || {};
     if (!ctx.ajaxUrl) return;

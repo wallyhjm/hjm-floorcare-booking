@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 // Optional test hook to seed cart for development only.
 // Enable by defining HJM_FLOORCARE_ENABLE_TEST_HOOK to true.

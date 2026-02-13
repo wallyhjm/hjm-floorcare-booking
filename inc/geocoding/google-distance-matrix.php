@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 /**
  * Get driving distance in miles using Google Distance Matrix API

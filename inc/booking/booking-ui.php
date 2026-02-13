@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if ( ! defined('ABSPATH') ) exit;
 
 $date = WC()->session->get('floorcare_booking_date');

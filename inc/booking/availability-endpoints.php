@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 add_action('wp_ajax_floorcare_get_date_availability', 'hjm_floorcare_get_date_availability_ajax');
 add_action('wp_ajax_nopriv_floorcare_get_date_availability', 'hjm_floorcare_get_date_availability_ajax');

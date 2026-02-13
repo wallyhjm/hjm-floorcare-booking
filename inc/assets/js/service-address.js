@@ -1,4 +1,4 @@
-﻿(function ($) {
+(function ($) {
 
     let saveTimer = null;
     let recalcTimer = null;

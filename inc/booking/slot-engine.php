@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Floorcare booking availability engine
  *
