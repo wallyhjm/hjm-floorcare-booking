@@ -45,15 +45,14 @@
             return;
         }
 
-        return fetchAvailability(date).then(state => {
+        return $.when(fetchAvailability(date), fetchSlots(date)).then((state, times) => {
+            const slotTimes = Array.isArray(times) ? times : [];
 
             if (!state) {
                 $msg.hide();
                 $time.prop('disabled', false);
-                // Still attempt to load slots if availability endpoint fails.
-                return fetchSlots(date).then(times => {
-                    populateTimes($container, times, selectedBeforeRefresh);
-                });
+                populateTimes($container, slotTimes, selectedBeforeRefresh);
+                return;
             }
 
             if (state.status === 'none') {
@@ -71,9 +70,7 @@
 
             // Only fetch slots if date is usable
             if (state.status !== 'none') {
-                return fetchSlots(date).then(times => {
-                    populateTimes($container, times, selectedBeforeRefresh);
-                });
+                populateTimes($container, slotTimes, selectedBeforeRefresh);
             }
         });
     }
@@ -107,17 +104,25 @@
     }
 
     function fetchAvailability(date) {
-        return $.post(
-            ctx.ajaxUrl,
-            {
+        return $.ajax({
+            url: ctx.ajaxUrl,
+            method: 'POST',
+            dataType: 'text',
+            data: {
                 action: 'floorcare_get_date_availability',
                 nonce: ctx.nonce || '',
                 date: date
+            }
+        }).then(
+            raw => {
+                try {
+                    const resp = JSON.parse(raw);
+                    return resp && resp.success ? resp.data : null;
+                } catch (e) {
+                    // Non-JSON response from admin-ajax should not block slot loading.
+                    return null;
+                }
             },
-            null,
-            'json'
-        ).then(
-            resp => resp?.success ? resp.data : null,
             () => null
         );
     }

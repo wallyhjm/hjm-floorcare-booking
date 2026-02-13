@@ -169,58 +169,70 @@ add_action( 'wp_ajax_floorcare_get_date_availability', 'hjm_floorcare_ajax_get_d
 add_action( 'wp_ajax_nopriv_floorcare_get_date_availability', 'hjm_floorcare_ajax_get_date_availability' );
 
 function hjm_floorcare_ajax_get_date_availability() {
+    try {
+        // Prevent stray buffered output from breaking JSON responses.
+        if ( ob_get_length() ) {
+            @ob_clean();
+        }
 
-    if ( ! check_ajax_referer( 'hjm_floorcare_ajax', 'nonce', false ) ) {
-        wp_send_json_error([ 'message' => 'Invalid nonce.' ], 403);
-    }
+        if ( ! check_ajax_referer( 'hjm_floorcare_ajax', 'nonce', false ) ) {
+            wp_send_json_error([ 'message' => 'Invalid nonce.' ], 403);
+        }
 
-    $date = sanitize_text_field( $_POST['date'] ?? '' );
+        $date = sanitize_text_field( $_POST['date'] ?? '' );
 
-    if ( empty( $date ) ) {
-        wp_send_json_error();
-    }
+        if ( empty( $date ) ) {
+            wp_send_json_error([ 'message' => 'Missing date' ], 400);
+        }
 
-    $availability = hjm_floorcare_get_daily_availability( $date );
+        $availability = hjm_floorcare_get_daily_availability( $date );
 
-    // Closed day
-    if ( $availability['is_closed'] ) {
+        // Closed day
+        if ( $availability['is_closed'] ) {
+            wp_send_json_success([
+                'date'      => $date,
+                'status'    => 'none',
+                'capacity'  => 0,
+                'booked'    => 0,
+                'remaining' => 0,
+                'message'   => 'No availability on this date',
+            ]);
+        }
+
+        // Fully booked
+        if ( $availability['remaining'] <= 0 ) {
+            wp_send_json_success([
+                'date'      => $date,
+                'status'    => 'none',
+                'capacity'  => $availability['capacity'],
+                'booked'    => $availability['booked'],
+                'remaining' => 0,
+                'message'   => 'This date is fully booked',
+            ]);
+        }
+
+        // Limited threshold
+        $status  = 'available';
+        $message = 'Availability available';
+
+        if ( $availability['remaining'] <= HJM_FLOORCARE_LIMITED_THRESHOLD_MINUTES ) {
+            $status  = 'limited';
+            $message = 'Limited availability remaining';
+        }
+
         wp_send_json_success([
             'date'      => $date,
-            'status'    => 'none',
-            'capacity'  => 0,
-            'booked'    => 0,
-            'remaining' => 0,
-            'message'   => 'No availability on this date',
-        ]);
-    }
-
-    // Fully booked
-    if ( $availability['remaining'] <= 0 ) {
-        wp_send_json_success([
-            'date'      => $date,
-            'status'    => 'none',
+            'status'    => $status,
             'capacity'  => $availability['capacity'],
             'booked'    => $availability['booked'],
-            'remaining' => 0,
-            'message'   => 'This date is fully booked',
+            'remaining' => $availability['remaining'],
+            'message'   => $message,
         ]);
+    } catch ( \Throwable $e ) {
+        error_log( 'HJM Floorcare availability AJAX error: ' . $e->getMessage() );
+        if ( ob_get_length() ) {
+            @ob_clean();
+        }
+        wp_send_json_error([ 'message' => 'Availability endpoint error.' ], 500);
     }
-
-    // Limited threshold
-    $status  = 'available';
-    $message = 'Availability available';
-
-    if ( $availability['remaining'] <= HJM_FLOORCARE_LIMITED_THRESHOLD_MINUTES ) {
-        $status  = 'limited';
-        $message = 'Limited availability remaining';
-    }
-
-    wp_send_json_success([
-        'date'      => $date,
-        'status'    => $status,
-        'capacity'  => $availability['capacity'],
-        'booked'    => $availability['booked'],
-        'remaining' => $availability['remaining'],
-        'message'   => $message,
-    ]);
 }
