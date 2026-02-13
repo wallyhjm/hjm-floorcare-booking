@@ -66,9 +66,10 @@ function hjm_floorcare_addon_meta_box($post) {
     wp_nonce_field('floorcare_addon_save', 'floorcare_addon_nonce');
     ?>
 
-    <p>
+    <p class="hjm-addon-base-price-row" <?php if ($price_model === 'tiered_flat') { echo 'style="display:none;"'; } ?>>
         <label><strong>Price increase ($)</strong></label><br>
         <input type="number" step="0.01" name="addon_price" value="<?php echo esc_attr($price); ?>">
+        <br><small>Used for Flat and Per unit models.</small>
     </p>
 
     <p>
