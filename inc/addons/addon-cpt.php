@@ -3,6 +3,10 @@
 /**
  * Floorcare Add-ons CPT
  */
+add_action('after_setup_theme', function () {
+    add_theme_support('post-thumbnails', ['floorcare_addon']);
+});
+
 add_action('init', function () {
 
     register_post_type('floorcare_addon', [
@@ -16,7 +20,7 @@ add_action('init', function () {
         'show_ui'       => true,
         'menu_position' => 26,
         'menu_icon'     => 'dashicons-plus-alt',
-        'supports'      => ['title'],
+        'supports'      => ['title', 'thumbnail'],
     ]);
 
 });
@@ -42,6 +46,10 @@ function hjm_floorcare_addon_meta_box($post) {
     $per_unit  = get_post_meta($post->ID, '_addon_per_unit', true);
     $price_model = get_post_meta($post->ID, '_addon_price_model', true);
     $price_tiers = get_post_meta($post->ID, '_addon_price_tiers', true);
+
+    if (!in_array($price_model, ['flat', 'per_unit', 'tiered_flat'], true)) {
+        $price_model = $per_unit === 'yes' ? 'per_unit' : 'flat';
+    }
 
     if (!is_array($price_tiers)) {
         $price_tiers = [];
@@ -72,7 +80,7 @@ function hjm_floorcare_addon_meta_box($post) {
         </select>
     </p>
 
-    <p>
+    <p class="hjm-addon-tier-rules-row" <?php if ($price_model !== 'tiered_flat') { echo 'style="display:none;"'; } ?>>
         <label><strong>Tiered pricing rules</strong></label><br>
         <textarea name="addon_price_tiers" rows="5" cols="60" placeholder="1,5,30&#10;6,*,60"><?php echo esc_textarea(trim($tiers_text)); ?></textarea><br>
         <small>One tier per line: <code>min,max,price</code>. Use <code>*</code> for no max. Example: <code>1,5,30</code> then <code>6,*,60</code>.</small>
@@ -111,6 +119,10 @@ function hjm_floorcare_addon_meta_box($post) {
             <input type="checkbox" name="addon_per_unit" value="yes" <?php checked($per_unit, 'yes'); ?>>
             Applies per unit (per room / item / rug)
         </label>
+    </p>
+
+    <p>
+        <small>Use the Featured Image panel to upload/select an image for this add-on.</small>
     </p>
 
     <?php
@@ -191,6 +203,34 @@ add_action('save_post_floorcare_addon', function ($post_id) {
     }
 
     update_post_meta($post_id, '_addon_price_tiers', $tiers);
+});
+
+add_action('admin_enqueue_scripts', function ($hook) {
+
+    if ($hook !== 'post.php' && $hook !== 'post-new.php') {
+        return;
+    }
+
+    if (!function_exists('get_current_screen')) {
+        return;
+    }
+
+    $screen = get_current_screen();
+
+    if (!$screen || $screen->post_type !== 'floorcare_addon') {
+        return;
+    }
+
+    $script_path = HJM_FLOORCARE_PATH . 'inc/assets/js/addon-admin.js';
+    $script_ver  = file_exists($script_path) ? (string) filemtime($script_path) : '1.0.0';
+
+    wp_enqueue_script(
+        'hjm-floorcare-addon-admin',
+        HJM_FLOORCARE_URL . 'inc/assets/js/addon-admin.js',
+        ['jquery'],
+        $script_ver,
+        true
+    );
 });
 
 

@@ -298,7 +298,15 @@ add_action('woocommerce_before_add_to_cart_button', function () {
     foreach ($addons as $addon) {
 
         $price_label = hjm_floorcare_get_addon_price_label($addon->ID);
+        $image_url = get_the_post_thumbnail_url($addon->ID, 'thumbnail');
+
         echo '<label class="floorcare-addon">';
+        if ($image_url) {
+            echo '<span class="floorcare-addon-image-wrap">';
+            echo '<img class="floorcare-addon-image" src="' . esc_url($image_url) . '" alt="' . esc_attr($addon->post_title) . '" width="64" height="64" loading="lazy" decoding="async">';
+            echo '</span> ';
+        }
+
         echo '<input type="checkbox" name="floorcare_addons[]" value="' . esc_attr($addon->ID) . '"> ';
         echo esc_html($addon->post_title);
 
