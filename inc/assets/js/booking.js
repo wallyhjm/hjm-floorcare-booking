@@ -30,6 +30,50 @@
             nonce: ctx.nonce || '',
             date: date,
             time: time
+        }, null, 'json');
+    }
+
+    function syncDateState($container, date) {
+        const $time = $container.find('[name="floorcare_booking_time"]');
+        const $msg = $container.find('.floorcare-availability-message');
+
+        populateTimes($container, []);
+
+        if (!date) {
+            setBooking('', '');
+            return;
+        }
+
+        return fetchAvailability(date).then(state => {
+
+            if (!state) {
+                $msg.hide();
+                $time.prop('disabled', false);
+                // Still attempt to load slots if availability endpoint fails.
+                return fetchSlots(date).then(times => {
+                    populateTimes($container, times);
+                });
+            }
+
+            if (state.status === 'none') {
+                setBooking('', '');
+                $time.prop('disabled', true);
+            } else {
+                $time.prop('disabled', false);
+            }
+
+            $msg
+                .removeClass('available limited none')
+                .addClass(state.status)
+                .text(state.message)
+                .show();
+
+            // Only fetch slots if date is usable
+            if (state.status !== 'none') {
+                return fetchSlots(date).then(times => {
+                    populateTimes($container, times);
+                });
+            }
         });
     }
 
@@ -81,48 +125,7 @@
 
         const $container = jQuery(this).closest('.floorcare-booking');
         const date = jQuery(this).val();
-        const $time = $container.find('[name="floorcare_booking_time"]');
-
-        populateTimes($container, []);
-
-        if (!date) {
-            setBooking('', '');
-            return;
-        }
-
-        fetchAvailability(date).then(state => {
-
-            const $msg = $container.find('.floorcare-availability-message');
-
-            if (!state) {
-                $msg.hide();
-                $time.prop('disabled', false);
-                // Still attempt to load slots if availability endpoint fails.
-                return fetchSlots(date).then(times => {
-                    populateTimes($container, times);
-                });
-            }
-
-            if (state.status === 'none') {
-                setBooking('', '');
-                $time.prop('disabled', true);
-            } else {
-                $time.prop('disabled', false);
-            }
-
-            $msg
-                .removeClass('available limited none')
-                .addClass(state.status)
-                .text(state.message)
-                .show();
-
-            // Only fetch slots if date is usable
-            if (state.status !== 'none') {
-                return fetchSlots(date).then(times => {
-                    populateTimes($container, times);
-                });
-            }
-        });
+        syncDateState($container, date);
     });
 
 
@@ -135,13 +138,42 @@
 
         clearTimeout(timer);
         timer = setTimeout(function () {
-            setBooking(date, time);
+            setBooking(date, time).then(resp => {
+                if (!resp || !resp.success) {
+                    // Server rejected slot (stale/invalid). Reset UI to avoid phantom selection.
+                    $container.find('[name="floorcare_booking_time"]').val('');
+                }
+            }, () => {
+                $container.find('[name="floorcare_booking_time"]').val('');
+            });
         }, 250);
     });
 
-    // Cart recalculation clears time
+    // Cart recalculation: keep selected time if still valid for selected date.
     $(document.body).on('updated_cart_totals', function () {
-        $('[name="floorcare_booking_time"]').val('');
+        $('.floorcare-booking').each(function () {
+            const $container = $(this);
+            const date = $container.find('[name="floorcare_booking_date"]').val();
+            const selected = $container.find('[name="floorcare_booking_time"]').val();
+
+            if (!date || !selected) return;
+
+            fetchSlots(date).then(times => {
+                if (times.indexOf(selected) === -1) {
+                    $container.find('[name="floorcare_booking_time"]').val('');
+                    setBooking(date, '');
+                }
+            });
+        });
+    });
+
+    // Initial load: if date already selected in session/UI, fetch available times immediately.
+    $('.floorcare-booking').each(function () {
+        const $container = $(this);
+        const date = $container.find('[name="floorcare_booking_date"]').val();
+        if (date) {
+            syncDateState($container, date);
+        }
     });
 
 })(jQuery);
